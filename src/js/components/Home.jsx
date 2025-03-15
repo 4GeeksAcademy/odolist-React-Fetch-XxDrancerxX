@@ -15,16 +15,32 @@ const Home = () => {
 		setList(newtList);
 	}
       
-	 const toDoUrl = "https://playground.4geeks.com/todo/users/idm";
+	 const toDoUrl = "https://playground.4geeks.com/todo/";
+	//  const toDoUrl = "https://playground.4geeks.com/todo/users/idm";
 	 const getToDos = () => {
-	 	 fetch(toDoUrl)
+	 	 fetch(toDoUrl + "users/idm")
 		.then((rsp)=> rsp.json())
 		.then((data)=> setList(data.todos))
 	}
-	useEffect(() => {
-		getToDos();  
-	}, []);
-          
+	const addTodo = (input) => {
+		const options = {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			  },
+			  body: JSON.stringify(input)
+			
+		}
+            .fetch(toDoUrl + "todos/idm", options)
+			.then(rsp => rsp.json()) 
+			.then(data => console.log(data,"data added"));
+			
+	}
+	
+
+	useEffect(()=>{
+     getToDos();        
+	},[]);
 	
 
 	return (
@@ -38,8 +54,14 @@ const Home = () => {
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {
-								setList([...list, input, ]);
+								const todoObj = {
+									"label": input,
+									"is_done": false
+								  }
+								
+								setList([...list, todoObj, ]);
 								setInput("");
+								addTodo(todoObj);
 
 
 							}
