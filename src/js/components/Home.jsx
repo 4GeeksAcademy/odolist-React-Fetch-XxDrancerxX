@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 //include images into your bundle
 import rigoImage from "../../img/rigo-baby.jpg";
+import { use } from "react";
 
 //create your first component
 const Home = () => {
 	const [input, setInput] = useState("");
-	const [list, setList] = useState(["make the homework", "Do excercises", "Do the laundry"]);
-	const [posts, setPosts] = useState([]);
+	const [list, setList] = useState([""]);
+	
 
 	const deleteLi = (index) => {
 		const newtList = list.filter((item, i) => i != index);
@@ -18,9 +19,12 @@ const Home = () => {
 	 const getToDos = () => {
 	 	 fetch(toDoUrl)
 		.then((rsp)=> rsp.json())
-		.then((data)=> console.log(data,"data processed"))
-	 };
-         getToDos();    
+		.then((data)=> setList(data.todos))
+	}
+	useEffect(() => {
+		getToDos();  
+	}, []);
+          
 	
 
 	return (
@@ -34,7 +38,7 @@ const Home = () => {
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {
-								setList([...list, input]);
+								setList([...list, input, ]);
 								setInput("");
 
 
@@ -42,15 +46,15 @@ const Home = () => {
 						}}
 					/>
 				</li>
-				{list.map(
+				{list.length > 0 ? list.map(
 					(item, index) => {
 						return (
-							<li onClick={() => deleteLi(index)} className="list-group-item">{item}</li>
+							<li onClick={() => deleteLi(index)} className="list-group-item">{item.label}</li>
 						)
 					}
 
-				)}
-
+				)
+ : "There is no items"}
 
 			</ul>
 		</div>
