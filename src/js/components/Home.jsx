@@ -10,14 +10,7 @@ const Home = () => {
 
     const toDoUrl = "https://playground.4geeks.com/todo/";
 
-    const deleteLi = (index) => {
-        console.log("Deleting todo at index:", index);
-        const newList = list.filter((item, i) => i !== index);
-        setList(newList);
-        console.log("Updated list after deletion:", newList);
-        updateToDos(newList);
-    }
-
+ 
     const createUser = () => {
         const options = {
             method: "POST",
@@ -25,6 +18,7 @@ const Home = () => {
                 "Content-Type": "application/json"
             }
         }
+        console.log("Creating user with POST request to:", toDoUrl + "users/idm");
         fetch(toDoUrl + "users/idm", options)
             .then((resp) => {
                 if (!resp.ok) {
@@ -38,38 +32,77 @@ const Home = () => {
             })
             .catch((error) => console.error("Error creating user:", error));
 
-
-
-
     }
+
+    const deleteLi = (index) => {
+        console.log("Deleting todo at index:", index);
+
+        // Get the todo to delete
+        const todoToDelete = list[index];
+        console.log("Todo to delete:", todoToDelete);
+
+        // Send DELETE request to the backend
+        fetch(`${toDoUrl}todos/${todoToDelete.id}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then((resp) => {
+                if (!resp.ok) {
+                    throw new Error(`HTTP error! status: ${resp.status}`);
+                }
+                console.log("Todo deleted from backend:", todoToDelete);
+
+                // Update the frontend state after successful deletion
+                const newList = list.filter((item, i) => i !== index);
+                setList(newList);
+                console.log("Updated list after deletion:", newList);
+            })
+            .catch((error) => console.error("Error deleting todo:", error));
+    };
+
 
     const getToDos = () => {
         fetch(toDoUrl + "users/idm")
-            .then((resp) => resp.json())
+            .then((resp) => {
+                console.log("Response status:", resp.status); // Log the HTTP status
+                if (resp.status === 404) {
+                    console.warn("User does not exist. Creating user...");
+                    createUser(); // Create the user if not found
+                    return null; // Stop further processing
+                }
+                return resp.json();
+            })
             .then((data) => {
-                console.log("Fetched todos:", data.todos);
-                setList(data.todos);
+                if (data) {
+                    console.log("Fetched data:", data); // Log the full response
+                    console.log("Fetched todos:", data.todos); // Log the todos specifically
+                    setList(data.todos || []); // Ensure `list` is always an array
+                    console.log("Updated list state:", data.todos || []);
+                }
             })
             .catch((error) => console.error("Error fetching todos:", error));
-    }
+    };
+
 
     const updateToDos = (newList) => {
         newList.forEach(todo => {
+            console.log("Todo object before stringifying:", todo); // Debug the object
             const options = {
                 method: "PUT",
-                body: JSON.stringify(todo),
+                body: JSON.stringify(todo), // Convert to JSON string
                 headers: {
                     "Content-Type": "application/json"
                 }
             };
-            console.log("Payload being updated:", options.body);
+            console.log("JSON string being sent:", options.body); // Debug the JSON string
             fetch(`${toDoUrl}todos/${todo.id}`, options)
                 .then((resp) => resp.json())
                 .then((data) => console.log("Todo updated:", data))
                 .catch((error) => console.error("Error updating todo:", error));
         });
-    }
-
+    };
     const addTodo = (input) => {
         const options = {
             method: "POST",
@@ -142,6 +175,7 @@ const Home = () => {
                 </li>
                 {list.length > 0 ? list.map(
                     (item, index) => {
+                        console.log("Rendering todo:", item);
                         return (
                             <li key={index} onClick={() => deleteLi(index)} className="list-group-item">{item.label}</li>
                         )
